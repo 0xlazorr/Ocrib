@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Remote Access Platform</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #1a1d24;
+            --text-color: #e0e0e0;
+            --text-muted: #8892b0;
+            --border-color: #2a2e38;
+            --input-bg: #2a2e38;
+            --button-bg: #3b82f6;
+            --button-hover: #2563eb;
+            --table-border: #2a2e38;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #d1d5db;
+            --input-bg: #f9fafb;
+            --table-border: #e5e7eb;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .header div {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            body {
+                padding: 10px;
+            }
+            .card {
+                padding: 15px;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--table-border);
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-muted);
+        }
+
+        .online {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .offline {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        button {
+            padding: 12px;
+            width: 100%;
+            margin-top: 10px;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--button-bg);
+        }
+
+        button {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: var(--button-hover);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--text-color);
+        }
+
+        .link-text {
+            color: var(--button-bg);
+            cursor: pointer;
+            font-size: 14px;
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .theme-toggle-btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--input-bg);
+        }
+
+        .theme-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .password-wrapper input {
+            margin-top: 0;
+            padding-right: 40px;
+        }
+
+        .eye-btn {
+            position: absolute;
+            right: 10px;
+            background: transparent;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            width: auto;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .eye-btn:hover {
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        .eye-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+            <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">
+                <svg id="themeIcon" viewBox="0 0 24 24">
+                    <path
+                        d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" />
+                </svg>
+                <span id="themeText">Light Mode</span>
+            </button>
+        </div>
+
+        <div id="authScreen" class="card" style="max-width: 400px; margin: 50px auto;">
+            <h2>System Login</h2>
+            <input type="text" id="loginId" placeholder="Username or Email">
+            <div class="password-wrapper">
+                <input type="password" id="password" placeholder="Password">
+                <button type="button" class="eye-btn" onclick="toggleVisibility('password', this)">
+                    <svg class="eye-open" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="eye-closed hidden" viewBox="0 0 24 24">
+                        <path
+                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                        </path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            <button onclick="login()">Login</button>
+            <span class="link-text" onclick="switchScreen('registerScreen')">Need an account? Register</span>
+            <span class="link-text" onclick="switchScreen('forgotScreen')">Forgot Password?</span>
+            <p id="authStatus" style="color: #ef4444; text-align: center;"></p>
+        </div>
+
+        <div id="registerScreen" class="card hidden" style="max-width: 400px; margin: 50px auto;">
+            <h2>Create Account</h2>
+            <input type="text" id="regUser" placeholder="Username">
+            <input type="email" id="regEmail" placeholder="Email Address">
+            <div class="password-wrapper">
+                <input type="password" id="regPass" placeholder="Password">
+                <button type="button" class="eye-btn" onclick="toggleVisibility('regPass', this)">
+                    <svg class="eye-open" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="eye-closed hidden" viewBox="0 0 24 24">
+                        <path
+                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                        </path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            <button onclick="register()">Create Account</button>
+            <span class="link-text" onclick="switchScreen('authScreen')">Back to Login</span>
+            <p id="regStatus" style="color: #ef4444; text-align: center;"></p>
+        </div>
+
+        <div id="forgotScreen" class="card hidden" style="max-width: 400px; margin: 50px auto;">
+            <h2>Reset Password</h2>
+            <div id="requestResetPhase">
+                <input type="email" id="resetEmail" placeholder="Enter your email">
+                <button onclick="requestReset()">Send Reset Token</button>
+            </div>
+            <div id="applyResetPhase" class="hidden">
+                <input type="text" id="resetToken" placeholder="Enter Reset Token">
+                <div class="password-wrapper">
+                    <input type="password" id="newPassword" placeholder="New Password">
+                    <button type="button" class="eye-btn" onclick="toggleVisibility('newPassword', this)">
+                        <svg class="eye-open" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg class="eye-closed hidden" viewBox="0 0 24 24">
+                            <path
+                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                            </path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
+                </div>
+                <button onclick="applyReset()">Update Password</button>
+            </div>
+            <span class="link-text" onclick="switchScreen('authScreen')">Back to Login</span>
+            <p id="resetStatus" style="text-align: center;"></p>
+        </div>
+
+        <div id="dashboardScreen" class="hidden">
+            <div class="header">
+                <h1 style="margin:0;">Dashboard</h1>
+                <div>
+                    <span id="welcomeMsg" style="margin-right: 20px; color: var(--text-muted);"></span>
+                    <button onclick="logout()" style="width: auto; background: #ef4444; color: white;">Logout</button>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>1. Link New Device</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Enter the 6-digit PIN displayed on your receiver to link it to your account.</p>
+                    <input type="text" id="newToken" placeholder="Enter 6-Digit PIN">
+                    <input type="text" id="newName" placeholder="Device Nickname (Optional)">
+                    <button onclick="pairDevice()">Link Device</button>
+                    <p id="pairStatus"></p>
+                </div>
+
+                <div class="card">
+                    <h2>2. Route New Download</h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Select an online device and paste a direct link to begin the remote download.</p>
+                    <div id="deviceCheckboxes" style="background: var(--bg-card); border: 1px solid var(--border); padding: 10px; border-radius: 6px; max-height: 150px; overflow-y: auto; margin-bottom: 10px;">
+                        <span style="color: var(--text-muted); font-size: 14px;">No devices online/unlocked</span>
+                    </div>
+                    <input type="text" id="urlInput" placeholder="Paste direct download link">
+                    <button onclick="sendLink()">Transmit to Selected Device(s)</button>
+                    <p id="routeStatus" style="color: #4caf50;"></p>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <h2>Your Linked Devices</h2>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <tr>
+                                <th>Device Name</th>
+                                <th>Device ID</th>
+                                <th>Status</th>
+                                <th>Privacy Lock</th>
+                            </tr>
+                            <tbody id="deviceTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <h2>Routing History</h2>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Target Device</th>
+                                <th>File Link</th>
+                            </tr>
+                            <tbody id="historyTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let dashboardInterval = null;
+
+        function toggleTheme() {
+            const body = document.body;
+            const text = document.getElementById("themeText");
+            const icon = document.getElementById("themeIcon");
+
+            const moonPath = "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z";
+            const sunPath = "M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z";
+
+            if (body.getAttribute("data-theme") === "light") {
+                body.removeAttribute("data-theme");
+                localStorage.setItem("theme", "dark");
+                text.innerText = "Light Mode";
+                icon.innerHTML = `<path d="${sunPath}"/>`;
+            } else {
+                body.setAttribute("data-theme", "light");
+                localStorage.setItem("theme", "light");
+                text.innerText = "Dark Mode";
+                icon.innerHTML = `<path fill-rule="evenodd" clip-rule="evenodd" d="${moonPath}"/>`;
+            }
+        }
+
+        if (localStorage.getItem("theme") === "light") {
+            document.body.setAttribute("data-theme", "light");
+            document.getElementById("themeText").innerText = "Dark Mode";
+            document.getElementById("themeIcon").innerHTML = `<path fill-rule="evenodd" clip-rule="evenodd" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>`;
+        }
+
+        function toggleVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const iconOpen = btn.querySelector('.eye-open');
+            const iconClosed = btn.querySelector('.eye-closed');
+            if (input.type === "password") {
+                input.type = "text";
+                iconOpen.classList.add('hidden');
+                iconClosed.classList.remove('hidden');
+            } else {
+                input.type = "password";
+                iconOpen.classList.remove('hidden');
+                iconClosed.classList.add('hidden');
+            }
+        }
+
+        function switchScreen(screenId) {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('forgotScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+            document.querySelectorAll('p[id$="Status"]').forEach(p => p.innerText = '');
+        }
+
+        async function apiCall(endpoint, payload) {
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            return { status: res.status, data: data };
+        }
+
+        async function login() {
+            let id = document.getElementById('loginId').value;
+            let p = document.getElementById('password').value;
+            let res = await apiCall('/api/login', { login_id: id, password: p });
+            if (res.status === 200) {
+                currentUser = res.data;
+                switchScreen('dashboardScreen');
+                document.getElementById('welcomeMsg').innerText = "Logged in as " + currentUser.username;
+                loadDashboard();
+                dashboardInterval = setInterval(loadDashboard, 5000);
+            } else {
+                document.getElementById('authStatus').innerText = res.data.error;
+            }
+        }
+
+        async function register() {
+            let u = document.getElementById('regUser').value;
+            let e = document.getElementById('regEmail').value;
+            let p = document.getElementById('regPass').value;
+            let res = await apiCall('/api/register', { username: u, email: e, password: p });
+            let status = document.getElementById('regStatus');
+            if (res.status === 200) {
+                status.style.color = "#4caf50";
+                status.innerText = "Account created. You may now login.";
+                setTimeout(() => switchScreen('authScreen'), 2000);
+            } else {
+                status.style.color = "#ef4444";
+                status.innerText = res.data.error;
+            }
+        }
+
+        async function requestReset() {
+            let e = document.getElementById('resetEmail').value;
+            await apiCall('/api/forgot', { email: e });
+            let status = document.getElementById('resetStatus');
+            status.style.color = "#4caf50";
+            status.innerText = "Check the server terminal for the token.";
+            document.getElementById('requestResetPhase').classList.add('hidden');
+            document.getElementById('applyResetPhase').classList.remove('hidden');
+        }
+
+        async function applyReset() {
+            let t = document.getElementById('resetToken').value;
+            let p = document.getElementById('newPassword').value;
+            let res = await apiCall('/api/reset', { token: t, password: p });
+            let status = document.getElementById('resetStatus');
+            if (res.status === 200) {
+                status.style.color = "#4caf50";
+                status.innerText = "Password updated! Redirecting...";
+                setTimeout(() => switchScreen('authScreen'), 2000);
+            } else {
+                status.style.color = "#ef4444";
+                status.innerText = res.data.error;
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            clearInterval(dashboardInterval);
+            switchScreen('authScreen');
+            document.getElementById('loginId').value = "";
+            document.getElementById('password').value = "";
+        }
+
+        async function pairDevice() {
+            let token = document.getElementById('newToken').value.trim();
+            let name = document.getElementById('newName').value.trim();
+            let statusEl = document.getElementById('pairStatus');
+
+            if (!token || token.length < 6) {
+                statusEl.style.color = "#ef4444";
+                statusEl.innerText = "Please enter a valid 6-digit PIN.";
+                return;
+            }
+
+            if (!name) {
+                // Default to a name based on the user if not provided
+                name = currentUser.username + "'s Device";
+            }
+
+            let res = await apiCall('/api/pair', { user_id: currentUser.id, token: token, name: name });
+            if (res.status === 200) {
+                statusEl.style.color = "#4caf50";
+                statusEl.innerText = "Device linked successfully.";
+                document.getElementById('newToken').value = "";
+                document.getElementById('newName').value = "";
+                loadDashboard();
+            } else {
+                statusEl.style.color = "#ef4444";
+                statusEl.innerText = res.data.error;
+            }
+            setTimeout(() => statusEl.innerText = "", 3000);
+        }
+
+        async function sendLink() {
+            let checkboxes = document.querySelectorAll("#deviceCheckboxes input[type='checkbox']:checked");
+            let tokens = Array.from(checkboxes).map(cb => cb.value);
+            let link = document.getElementById("urlInput").value.trim();
+            let statusEl = document.getElementById("routeStatus");
+
+            if (!link) {
+                statusEl.style.color = "#ef4444";
+                statusEl.innerText = "Error: Please paste a download link first.";
+                setTimeout(() => statusEl.innerText = "", 3000);
+                return;
+            }
+
+            if (tokens.length === 0) {
+                statusEl.style.color = "#ef4444";
+                statusEl.innerText = "Error: No online device selected.";
+                setTimeout(() => statusEl.innerText = "", 3000);
+                return;
+            }
+
+            let res = await apiCall('/api/download', { tokens: tokens, link: link });
+            if (res.status === 200) {
+                statusEl.style.color = "#4caf50";
+                statusEl.innerText = `Transmitted to ${tokens.length} device(s).`;
+                document.getElementById("urlInput").value = "";
+                loadDashboard();
+            } else {
+                statusEl.style.color = "#ef4444";
+                statusEl.innerText = "Error communicating with server.";
+            }
+            setTimeout(() => statusEl.innerText = "", 3000);
+        }
+
+        async function toggleLock(token) {
+            await apiCall('/api/toggle_lock', { token: token });
+            loadDashboard();
+        }
+
+        function loadDashboard() {
+            if (!currentUser) return;
+            fetch('/api/dashboard?user_id=' + currentUser.id)
+                .then(res => res.json())
+                .then(data => {
+                    let devHtml = '';
+                    let checkboxHtml = '';
+                    data.devices.forEach(d => {
+                        let statusClass = d.status === 'online' ? 'online' : 'offline';
+                        let lockBtnText = d.is_locked ? 'Unlock' : 'Lock';
+                        let lockBtnColor = d.is_locked ? '#ef4444' : '#3b82f6';
+                        let lockStatusText = d.is_locked ? ' (LOCKED)' : '';
+                        
+                        devHtml += `<tr>
+                            <td>${d.name}${lockStatusText}</td>
+                            <td>${d.token.substring(0, 8)}...</td>
+                            <td class="${statusClass}">${d.status.toUpperCase()}</td>
+                            <td><button onclick="toggleLock('${d.token}')" style="padding: 5px 10px; font-size: 12px; background: ${lockBtnColor}; width: auto; margin:0;">${lockBtnText}</button></td>
+                        </tr>`;
+                        
+                        if (d.status === 'online' && !d.is_locked) {
+                            checkboxHtml += `<div style="display: flex; align-items: center; margin-bottom: 5px;">
+                                <input type="checkbox" id="cb_${d.token}" value="${d.token}" style="width: auto; margin-right: 10px;">
+                                <label for="cb_${d.token}" style="margin: 0; font-size: 14px; cursor: pointer;">${d.name}</label>
+                            </div>`;
+                        }
+                    });
+                    document.getElementById('deviceTable').innerHTML = devHtml;
+                    
+                    document.getElementById('deviceCheckboxes').innerHTML = checkboxHtml || '<span style="color: var(--text-muted); font-size: 14px;">No devices online/unlocked</span>';
+
+                    let histHtml = '';
+                    data.history.forEach(h => {
+                        let localTime = new Date(h.time + " UTC").toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        histHtml += `<tr><td>${localTime}</td><td>${h.name}</td><td>${h.link}</td></tr>`;
+                    });
+                    document.getElementById('historyTable').innerHTML = histHtml;
+                });
+        }
+    </script>
+</body>
+
+</html>

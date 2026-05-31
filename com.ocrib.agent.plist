@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ocrib.agent</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/remote_agent</string>
+        <!-- The default server can be configured here -->
+        <string>127.0.0.1</string>
+        <string>8080</string>
+    </array>
+    <key>KeepAlive</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>WorkingDirectory</key>
+    <string>/Users/Shared/Ocrib</string>
+    <key>StandardOutPath</key>
+    <string>/Users/Shared/Ocrib/ocrib_agent.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/Shared/Ocrib/ocrib_agent.err</string>
+</dict>
+</plist>
