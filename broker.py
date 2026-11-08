@@ -7,6 +7,12 @@ import json
 import urllib.parse
 import uuid
 import os
+from enum import Enum
+
+class DeviceStatus(str, Enum):
+    """Explicit lifecycle state machine for remote agent device connectivity."""
+    ONLINE = "online"
+    OFFLINE = "offline"
 
 # Configuration from environment variables
 WEB_PORT = int(os.environ.get("WEB_PORT", 5000))
